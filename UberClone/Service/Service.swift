@@ -56,8 +56,8 @@ struct Service {
         let destinationCoordinates = [ destinationLocation.latitude, destinationLocation.longitude]
         
         let values = [
-            "pickUpLocation": pickUpCoordinates,
-            "destinationLocation": destinationCoordinates,
+            "pickUpCoordinates": pickUpCoordinates,
+            "destinationCoordinates": destinationCoordinates,
             "state": TripState.requested.rawValue
         ] as [String : Any]
         
@@ -80,5 +80,18 @@ struct Service {
             let trip = Trip(passengerUid: passenserUid, dictionary: dictionary)
             completion(trip)
         }
+    }
+    
+    
+    func acceptTrip(trip: Trip, completion: @escaping() -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        
+        let values = ["driverUid": uid, "state": TripState.accepted.rawValue] as [String: Any]
+        
+        REF_TRIPS.child(trip.passengerUid).updateChildValues(values) { error, dbRef in
+            print("accepting trip successfully!")
+            completion()
+        }
+        
     }
 }

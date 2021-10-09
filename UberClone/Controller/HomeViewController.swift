@@ -51,6 +51,7 @@ class HomeViewController: UIViewController {
         didSet {
             guard let trip = trip else { return }
             let pickUpVC = PickUpViewController(trip: trip)
+            pickUpVC.delegate = self
             self.present(pickUpVC, animated: true, completion: nil)
         }
     }
@@ -69,6 +70,13 @@ class HomeViewController: UIViewController {
         rideActionView.delegate = self
         
 //                signOut()
+    }
+    
+    
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(true)
+        print(trip)
     }
     
     
@@ -521,6 +529,11 @@ extension HomeViewController: RideActionViewDelegate {
             }
         }
     }
-    
-    
+}
+
+extension HomeViewController: PickUpVewControllerDelegate {
+    func didAcceptTrip(_ trip: Trip) {
+        self.trip?.state = trip.state
+        self.dismiss(animated: true, completion: nil)
+    }
 }

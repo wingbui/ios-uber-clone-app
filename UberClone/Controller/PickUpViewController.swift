@@ -8,7 +8,12 @@
 import UIKit
 import MapKit
 
+protocol PickUpVewControllerDelegate {
+    func didAcceptTrip(_ trip: Trip)
+}
+
 class PickUpViewController: UIViewController {
+    var delegate: PickUpVewControllerDelegate?
     
     let trip: Trip
     let mapView = MKMapView()
@@ -19,18 +24,32 @@ class PickUpViewController: UIViewController {
         super.init(nibName: nil, bundle: nil)
     }
     
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        configureUI()
-        
+        configure()
     }
     
-    func configureUI() {
+    
+    @objc func acceptTrip() {
+        Service.shared.acceptTrip(trip: trip) {
+            self.delegate?.didAcceptTrip(self.trip)
+        }
+    }
+    
+    
+    @objc func dismissView() {
+        self.dismiss(animated: true, completion: nil)
+    }
+    
+    
+    func configure() {
         view.backgroundColor = .backgroundColor
         configureCancelButton()
         configureMapView()
@@ -40,15 +59,15 @@ class PickUpViewController: UIViewController {
     
     
     func configureCancelButton() {
-        
         let cancelButton = ViewFactory.createIconButton(iconName: "xmark.circle", color: UIColor.white)
-        
         view.addSubview(cancelButton)
         
         NSLayoutConstraint.activate([
             cancelButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 32),
             cancelButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16)
         ])
+        
+        cancelButton.addTarget(nil, action: #selector(dismissView), for: .touchUpInside)
         
     }
     
@@ -64,13 +83,12 @@ class PickUpViewController: UIViewController {
         ])
     }
     
+    
     func configureMapView() {
-        
         mapView.layer.cornerRadius = 270 / 2
         mapView.translatesAutoresizingMaskIntoConstraints = false
-        
         view.addSubview(mapView)
-        
+      
         NSLayoutConstraint.activate([
             mapView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 128),
             mapView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -78,12 +96,21 @@ class PickUpViewController: UIViewController {
             mapView.widthAnchor.constraint(equalTo: mapView.heightAnchor)
         ])
         
+        addAnnotationForPickUpCoordinate()
+    }
+    
+    
+    func addAnnotationForPickUpCoordinate() {
+        let region = MKCoordinateRegion(center: trip.pickupCoordinates, latitudinalMeters: 1000, longitudinalMeters: 1000)
+        mapView.setRegion(region, animated: false)
         
+        let annotation = MKPointAnnotation()
+        annotation.coordinate = trip.pickupCoordinates
+        mapView.addAnnotation(annotation)
     }
     
     
     func configureAcceptButton() {
-        
         let acceptButton = ViewFactory.createPrimaryButton(title: "ACCEPT TRIP")
         acceptButton.backgroundColor = .white
         acceptButton.setTitleColor(.black, for: .normal)
@@ -97,6 +124,7 @@ class PickUpViewController: UIViewController {
             acceptButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -32),
         ])
         
+        acceptButton.addTarget(self, action: #selector(acceptTrip), for: .touchUpInside)
         
     }
 }
