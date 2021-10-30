@@ -18,7 +18,15 @@ extension MKMapView {
             zoomRect = zoomRect.union(pointRect)
         }
         
-        let insets = UIEdgeInsets(top: 75, left: 75, bottom: 200, right: 75)
+        let insets = UIEdgeInsets(top: 75, left: 75, bottom: 300, right: 75)
         setVisibleMapRect(zoomRect, edgePadding: insets, animated: true)
+    }
+    
+    
+    func addAndSelectAnnotation(forCoordinate coordinate: CLLocationCoordinate2D) {
+        let annotation = MKPointAnnotation()
+        annotation.coordinate = coordinate
+        self.addAnnotation(annotation)
+        self.selectAnnotation(annotation, animated: true)
     }
 }

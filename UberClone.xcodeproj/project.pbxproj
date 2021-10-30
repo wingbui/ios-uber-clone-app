@@ -19,6 +19,7 @@
 		1A2DBD9626EC33E900556C59 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1A2DBD9526EC33E900556C59 /* Assets.xcassets */; };
 		1A2DBD9926EC33E900556C59 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1A2DBD9726EC33E900556C59 /* LaunchScreen.storyboard */; };
 		1A2DBDA526EC35C100556C59 /* LogInViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2DBDA426EC35C100556C59 /* LogInViewController.swift */; };
+		1A41A605271427260010200C /* UIViewController+Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A41A604271427260010200C /* UIViewController+Ext.swift */; };
 		1A57B28826F85A4E000E9513 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1A57B28726F85A4E000E9513 /* GoogleService-Info.plist */; };
 		1A60BC3926F8802E00B2E85B /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A60BC3826F8802E00B2E85B /* HomeViewController.swift */; };
 		1A760F2327085FFA00BFA642 /* RideActionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A760F2227085FFA00BFA642 /* RideActionView.swift */; };
@@ -49,6 +50,7 @@
 		1A2DBD9826EC33E900556C59 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		1A2DBD9A26EC33E900556C59 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1A2DBDA426EC35C100556C59 /* LogInViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogInViewController.swift; sourceTree = "<group>"; };
+		1A41A604271427260010200C /* UIViewController+Ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIViewController+Ext.swift"; sourceTree = "<group>"; };
 		1A57B28726F85A4E000E9513 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		1A60BC3826F8802E00B2E85B /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
 		1A760F2227085FFA00BFA642 /* RideActionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideActionView.swift; sourceTree = "<group>"; };
@@ -137,8 +139,8 @@
 			children = (
 				1A2DBDA426EC35C100556C59 /* LogInViewController.swift */,
 				1A15716126F5F9B3001C7512 /* SignUpViewController.swift */,
-				1A60BC3826F8802E00B2E85B /* HomeViewController.swift */,
 				1A0F0ADF270EF8110091BEC6 /* PickUpViewController.swift */,
+				1A60BC3826F8802E00B2E85B /* HomeViewController.swift */,
 			);
 			path = Controller;
 			sourceTree = "<group>";
@@ -170,6 +172,7 @@
 				1A88F58D26EF1D9C0063BB3F /* UIColor+Ext.swift */,
 				1A26D6702705AAF700230776 /* MKPlacemark+Ext.swift */,
 				1A871A4827098C9900A6970D /* MKMapView+Ext.swift */,
+				1A41A604271427260010200C /* UIViewController+Ext.swift */,
 			);
 			path = Extension;
 			sourceTree = "<group>";
@@ -306,6 +309,7 @@
 			files = (
 				1ACDF13026FF469800E3F530 /* User.swift in Sources */,
 				1A2DBDA526EC35C100556C59 /* LogInViewController.swift in Sources */,
+				1A41A605271427260010200C /* UIViewController+Ext.swift in Sources */,
 				1A15716226F5F9B3001C7512 /* SignUpViewController.swift in Sources */,
 				1AF3EC6A26EDB20B00120526 /* UCTextField.swift in Sources */,
 				1A0E9CAA2702B9A6009EDBF4 /* DriverAnnotation.swift in Sources */,

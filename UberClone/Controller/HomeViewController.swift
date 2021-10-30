@@ -18,6 +18,11 @@ enum MenuButtonConfig {
     }
 }
 
+enum AnnotationType: String {
+    case pickUp
+    case destination
+}
+
 class HomeViewController: UIViewController {
     let menuButton = ViewFactory.createIconButton(iconName:"line.horizontal.3")
     private let mapView = MKMapView()
@@ -38,8 +43,8 @@ class HomeViewController: UIViewController {
             self.locationInputView.user = user
             if user?.accountType == .passenger {
                 fetchDrivers()
-                print("I am a passenger")
                 configureLocationInputActivatorView()
+                observeCurrentTrip()
             } else {
                 observeTrips()
             }
@@ -49,10 +54,16 @@ class HomeViewController: UIViewController {
     
     private var trip: Trip? {
         didSet {
-            guard let trip = trip else { return }
-            let pickUpVC = PickUpViewController(trip: trip)
-            pickUpVC.delegate = self
-            self.present(pickUpVC, animated: true, completion: nil)
+            guard let user = user else { return }
+            if user.accountType == .driver {
+                guard let trip = trip else { return }
+                let pickUpVC = PickUpViewController(trip: trip)
+                pickUpVC.delegate = self
+                self.present(pickUpVC, animated: true, completion: nil)
+            } else {
+                print("Requesting a ride")
+            }
+            
         }
     }
     
@@ -68,18 +79,13 @@ class HomeViewController: UIViewController {
         tableView.dataSource = self
         mapView.delegate = self
         rideActionView.delegate = self
+        locationManager?.delegate = self
         
-//                signOut()
+        //                signOut()
+        
     }
     
-    
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(true)
-        print(trip)
-    }
-    
-    
+    // MARK: API calling
     func checkIfUserIsLoggedIn() {
         if Auth.auth().currentUser?.uid == nil {
             let loginVC = LogInViewController()
@@ -91,10 +97,7 @@ class HomeViewController: UIViewController {
             DispatchQueue.main.async {
                 self.present(navController, animated: true, completion: nil)
             }
-            
-            print("User is not logged in...")
         } else {
-            print("calling configureUI")
             configureUI()
         }
     }
@@ -119,15 +122,13 @@ class HomeViewController: UIViewController {
         
         Service.shared.fetchUserData(uid: uid) { [weak self] user in
             guard let self = self else { return }
-            print("geting user data")
             self.user = user
         }
     }
     
-    
+    // passenger side methods
     func fetchDrivers() {
         guard let location = locationManager?.location else { return }
-        
         Service.shared.fetchDrivers(location: location) { driver in
             guard let coordinate = driver.location?.coordinate else { return }
             
@@ -135,11 +136,11 @@ class HomeViewController: UIViewController {
             
             var isDriverVisible: Bool {
                 return self.mapView.annotations.contains(where: { annotation -> Bool in
-                    
                     guard let driverAnnotation = annotation as? DriverAnnotation else { return false }
-                    
                     if driverAnnotation.uid == driver.uid {
                         driverAnnotation.updateAnnotationPosition(with: coordinate)
+                        print("calling zoomForActive in fetch drivers")
+                        self.zoomForActiveTrip(withDriverUid: driver.uid)
                         return true
                     }
                     return false
@@ -153,6 +154,46 @@ class HomeViewController: UIViewController {
     }
     
     
+    func observeCurrentTrip() {
+        Service.shared.observeCurrentTrip { trip in
+            self.trip = trip
+            guard let state = trip.state else { return }
+            guard let driverUid = trip.driverUid else { return }
+            
+            print(state)
+            
+            switch state {
+            case .requested:
+                break
+            case .accepted:
+                self.shouldPresentLoadingView(presenting: false)
+                self.removeAnnotationAndPolyline()
+                print("calling zoomForActive when being accepted")
+                self.zoomForActiveTrip(withDriverUid: driverUid)
+                
+                Service.shared.fetchUserData(uid: driverUid) { driver in
+                    self.animateRideActionView(shouldShow: true, withConfig: .tripAccepted, user: driver)
+                }
+            case .driverArrived:
+                self.rideActionView.config = .driverArrived
+            case .inProgress:
+                self.rideActionView.config = .tripInProgress
+            case .arrivedAtDestination:
+                self.rideActionView.config = .endTrip
+            case .completed:
+                Service.shared.deleteTrip { _,_ in
+                    self.animateRideActionView(shouldShow: false)
+                    self.centerMapOnUserLocation()
+                    self.menuButtonConfig = .menu
+                    self.locationInputActivatorView.alpha = 1
+                    self.menuButton.setImage(UIImage(systemName: "line.horizontal.3")?.withRenderingMode(.alwaysOriginal), for: .normal)
+                    self.presentAlertController(title: "Trip Completed", message: "Thank you!")
+                }
+            }
+        }
+    }
+    
+    // driver side methods
     func observeTrips() {
         Service.shared.observeTrips { trip in
             self.trip = trip
@@ -162,13 +203,31 @@ class HomeViewController: UIViewController {
     
     func dismissLocationView(completion: ((Bool) -> Void)? = nil) {
         
-        UIView.animate(withDuration: 0.3, animations: {
+        UIView.animate(withDuration: 0.2, animations: {
             self.locationInputView.alpha = 0
             self.tableView.frame.origin.y = self.view.frame.height
             self.locationInputView.removeFromSuperview()
         }, completion: completion)
     }
     
+    
+    func startTrip() {
+        guard let trip = trip else { return }
+        Service.shared.updateTripState(trip: trip, state: .inProgress) { error, dbRef in
+            self.rideActionView.config = .tripInProgress
+            self.removeAnnotationAndPolyline()
+            self.mapView.addAndSelectAnnotation(forCoordinate: trip.destinationCoordinates)
+            
+            let placemark = MKPlacemark(coordinate: trip.destinationCoordinates)
+            let mapItem = MKMapItem(placemark: placemark)
+            self.generatePolyline(toDestination: mapItem)
+            self.setCustomRegion(withType: .destination, coordinate: trip.destinationCoordinates)
+            
+            self.mapView.zoomToFit(annotations: self.mapView.annotations)
+        }
+    }
+    
+    // MARK: other methods
     
     @objc func menuButtonTapped() {
         
@@ -190,6 +249,33 @@ class HomeViewController: UIViewController {
     }
     
     
+    func animateRideActionView(shouldShow: Bool, withConfig config: RideActionViewConfiguration? = nil, user: User? = nil) {
+        
+        if shouldShow {
+            self.h?.constant = 0
+        } else {
+            self.h?.constant = 300
+        }
+        
+        UIView.animate(
+            withDuration: 0.2,
+            delay: 0.0,
+            options: .curveLinear,
+            animations: {
+                self.view.layoutIfNeeded()
+            },
+            completion: { _ in
+                guard let config = config else { return }
+                if let user = user {
+                    print("driver", user)
+                    self.rideActionView.user = user
+                }
+                self.rideActionView.configureUI(withConfig: config)
+            })
+    }
+    
+    // MARK: Confugure functions
+    
     func configureUI() {
         configureMapView()
         configureRideActionView()
@@ -201,9 +287,7 @@ class HomeViewController: UIViewController {
     
     
     func configureMenuButton() {
-        
         view.addSubview(menuButton)
-        menuButton.addTarget(self, action: #selector(menuButtonTapped), for: .touchUpInside)
         
         NSLayoutConstraint.activate([
             menuButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -211,6 +295,8 @@ class HomeViewController: UIViewController {
             menuButton.heightAnchor.constraint(equalToConstant: 50),
             menuButton.widthAnchor.constraint(equalToConstant: 50),
         ])
+        
+        menuButton.addTarget(self, action: #selector(menuButtonTapped), for: .touchUpInside)
     }
     
     
@@ -218,12 +304,9 @@ class HomeViewController: UIViewController {
         view.addSubview(locationInputActivatorView)
         
         locationInputActivatorView.alpha = 0
-        
-        UIView.animate(withDuration: 2) {
+        UIView.animate(withDuration: 0.2) {
             self.locationInputActivatorView.alpha = 1.0
         }
-        
-        print("indicatorView calling...")
         
         NSLayoutConstraint.activate([
             locationInputActivatorView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 60),
@@ -257,10 +340,8 @@ class HomeViewController: UIViewController {
     
     func configureMapView() {
         view.addSubview(mapView)
-        
         mapView.frame = view.frame
         mapView.translatesAutoresizingMaskIntoConstraints = false
-        
         mapView.showsUserLocation = true
         mapView.userTrackingMode = .follow
     }
@@ -295,33 +376,12 @@ class HomeViewController: UIViewController {
             constant: 300)
         self.h?.isActive = true
     }
-    
-    
-    func animateRideActionView(shouldShow: Bool) {
-        
-        if shouldShow {
-            self.h?.constant = 0
-        } else {
-            self.h?.constant = 300
-        }
-        
-        UIView.animate(
-            withDuration: 0.2,
-            delay: 0.0,
-            options: .curveLinear,
-            animations: {
-                self.view.layoutIfNeeded()
-            },
-            completion: nil)
-        
-    }
 }
 
 
 extension HomeViewController {
     
     func enableLocationServices() {
-        
         switch locationManager?.authorizationStatus {
         case .notDetermined:
             print("Not yet determined.")
@@ -330,7 +390,6 @@ extension HomeViewController {
             print("registered or denied.")
             break;
         case .authorizedAlways:
-            print("always.")
             locationManager?.startUpdatingLocation()
             locationManager?.desiredAccuracy = kCLLocationAccuracyBest
         case .authorizedWhenInUse:
@@ -354,7 +413,6 @@ extension HomeViewController {
         
         let search = MKLocalSearch(request: request)
         search.start { response, error in
-            
             if let error = error {
                 print(error)
             }
@@ -397,6 +455,38 @@ extension HomeViewController {
             mapView.removeOverlay(mapView.overlays[0])
         }
     }
+    
+    
+    func centerMapOnUserLocation() {
+        guard let coordiante = locationManager?.location?.coordinate else { return }
+        
+        let region = MKCoordinateRegion(center: coordiante, latitudinalMeters: 2000, longitudinalMeters: 2000)
+        mapView.setRegion(region, animated: true)
+    }
+    
+    
+    func setCustomRegion(withType type: AnnotationType, coordinate: CLLocationCoordinate2D) {
+        let region = CLCircularRegion(center: coordinate, radius: 10, identifier: type.rawValue)
+        locationManager?.startMonitoring(for: region)
+    }
+    
+    
+    func zoomForActiveTrip(withDriverUid uid: String) {
+        var annotations = [MKAnnotation]()
+        
+        mapView.annotations.forEach { annotation in
+            if let driverAnnotation = annotation as? DriverAnnotation {
+                if driverAnnotation.uid == uid {
+                    annotations.append(driverAnnotation)
+                }
+            }
+            
+            if let userAnnotation = annotation as? MKUserLocation {
+                annotations.append(userAnnotation)
+            }
+        }
+        self.mapView.zoomToFit(annotations: annotations)
+    }
 }
 
 
@@ -405,7 +495,6 @@ extension HomeViewController: LocationInputActivatorViewDelegate {
     func presentLocationInputView() {
         locationInputActivatorView.alpha = 0
         configureLocationInputView()
-        
     }
 }
 
@@ -424,8 +513,6 @@ extension HomeViewController: LocationInputViewDelegate {
     
     func executeSearch(naturalLanguage: String) {
         searchBy(naturalLanguageQuery: naturalLanguage) { placemarks in
-            print(naturalLanguage)
-            print(placemarks)
             self.placemarks = placemarks
             self.tableView.reloadData()
         }
@@ -435,6 +522,7 @@ extension HomeViewController: LocationInputViewDelegate {
 extension HomeViewController: MKMapViewDelegate {
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        
         if let annotation = annotation as? DriverAnnotation {
             let view = MKAnnotationView(annotation: annotation, reuseIdentifier: annotationIdentifier)
             view.image = #imageLiteral(resourceName: "chevron-sign-to-right")
@@ -445,7 +533,6 @@ extension HomeViewController: MKMapViewDelegate {
     
     
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
-        
         if let route = self.route {
             let polyline = route.polyline
             let lineRenderer = MKPolylineRenderer(overlay: polyline)
@@ -457,6 +544,43 @@ extension HomeViewController: MKMapViewDelegate {
         
         return MKOverlayRenderer()
     }
+    
+    
+    func mapView(_ mapView: MKMapView, didUpdate userLocation: MKUserLocation) {
+        guard let user = self.user else { return }
+        guard user.accountType == .driver else { return }
+        guard let location = userLocation.location else { return }
+        Service.shared.updateDriverLocation(location: location)
+    }
+}
+
+
+extension HomeViewController: CLLocationManagerDelegate {
+    
+    func locationManager(_ manager: CLLocationManager, didStartMonitoringFor region: CLRegion) {
+        if region.identifier == AnnotationType.pickUp.rawValue {
+            print("Did start monitoring pick-up region \(region)")
+        }
+        if region.identifier == AnnotationType.destination.rawValue {
+            print("Did start monitoring destination region \(region)")
+        }
+    }
+    
+    
+    func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
+        guard let trip = self.trip else { return }
+        
+        if region.identifier == AnnotationType.pickUp.rawValue {
+            Service.shared.updateTripState(trip: trip, state: .driverArrived) { _,_ in
+                self.rideActionView.config = .pickupPassenger
+            }
+        }
+        if region.identifier == AnnotationType.destination.rawValue {
+            Service.shared.updateTripState(trip: trip, state: .arrivedAtDestination) { _,_ in
+                self.rideActionView.config = .endTrip
+            }
+        }
+    }
 }
 
 
@@ -466,14 +590,12 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         return 2
     }
     
-    
     func tableView( _ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         return "Section"
     }
     
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
         let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath) as! LocationCell
         
         if indexPath.section == 1 {
@@ -491,23 +613,17 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
         let selectedPlace = placemarks[indexPath.row]
-        
         generatePolyline(toDestination: MKMapItem(placemark: selectedPlace))
         
         dismissLocationView { _ in
-            
             self.animateRideActionView(shouldShow: true)
             self.rideActionView.destination = selectedPlace
-            
-            let annotation = MKPointAnnotation()
-            annotation.coordinate = selectedPlace.coordinate
-            self.mapView.addAnnotation(annotation)
             
             self.menuButton.setImage(UIImage(systemName: "arrow.left")?.withRenderingMode(.alwaysOriginal), for: .normal)
             self.menuButtonConfig = .goBack
             
+            self.mapView.addAndSelectAnnotation(forCoordinate: selectedPlace.coordinate)
             let annotations = self.mapView.annotations.filter { !$0.isKind(of: DriverAnnotation.self) }
             self.mapView.zoomToFit(annotations: annotations)
         }
@@ -522,6 +638,9 @@ extension HomeViewController: RideActionViewDelegate {
             let destinationCoordinate = rideActionView.destination?.coordinate
         else { return }
         
+        shouldPresentLoadingView(presenting: true, message: "Finding your ride....")
+        self.animateRideActionView(shouldShow: false)
+        
         Service.shared.uploadTrip(pickUpLocation: pickUpCoordinate, destinationLocation: destinationCoordinate) { error, dbRef in
             if let error = error {
                 print(error)
@@ -529,11 +648,65 @@ extension HomeViewController: RideActionViewDelegate {
             }
         }
     }
+    
+    
+    func cancelTrip() {
+        Service.shared.deleteTrip { error, dbRef in
+            if let error = error {
+                print("error canceling trip: \(error)")
+            }
+            self.animateRideActionView(shouldShow: false)
+            self.removeAnnotationAndPolyline()
+            self.menuButtonConfig = .menu
+            self.menuButton.setImage(UIImage(systemName: "line.horizontal.3")?.withRenderingMode(.alwaysOriginal), for: .normal)
+            self.centerMapOnUserLocation()
+            self.locationInputActivatorView.alpha = 1
+            self.rideActionView.config = .requestRide
+        }
+    }
+    
+    
+    func pickUpPassenger() {
+        startTrip()
+    }
+    
+    
+    func dropOffPassenger() {
+        guard let trip = trip else { return }
+        Service.shared.updateTripState(trip: trip, state: .completed) { _,_ in
+            self.animateRideActionView(shouldShow: false)
+            self.removeAnnotationAndPolyline()
+            self.centerMapOnUserLocation()
+        }
+    }
 }
 
 extension HomeViewController: PickUpVewControllerDelegate {
     func didAcceptTrip(_ trip: Trip) {
-        self.trip?.state = trip.state
-        self.dismiss(animated: true, completion: nil)
+        self.mapView.addAndSelectAnnotation(forCoordinate: trip.pickupCoordinates)
+        
+        setCustomRegion(withType: .pickUp, coordinate: trip.pickupCoordinates)
+        
+        let placemark = MKPlacemark(coordinate: trip.pickupCoordinates)
+        let mapItem = MKMapItem(placemark: placemark)
+        generatePolyline(toDestination: mapItem)
+        mapView.zoomToFit(annotations: mapView.annotations)
+        
+        Service.shared.observeCancelledTrip(trip: trip) {
+            self.removeAnnotationAndPolyline()
+            self.animateRideActionView(shouldShow: false)
+            self.centerMapOnUserLocation()
+            self.presentAlertController(
+                title: "Trip Cancelled!",
+                message: "The passenger has cancelled this ride. Please press OK to continue."
+            )
+        }
+        
+        self.dismiss(animated: true) {
+            Service.shared.fetchUserData(uid: trip.passengerUid, completion: { passenger in
+                self.animateRideActionView(shouldShow: true, withConfig: .tripAccepted, user: passenger)
+            })
+            
+        }
     }
 }
