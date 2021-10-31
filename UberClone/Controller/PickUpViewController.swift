@@ -38,7 +38,7 @@ class PickUpViewController: UIViewController {
     
     
     @objc func acceptTrip() {
-        Service.shared.acceptTrip(trip: trip) {
+        DriverService.shared.acceptTrip(trip: trip) {
             self.delegate?.didAcceptTrip(self.trip)
         }
     }
