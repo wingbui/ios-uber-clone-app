@@ -35,6 +35,4 @@ class SettingsViewController: UITableViewController {
         navigationController?.navigationBar.barTintColor = .backgroundColor
         navigationController?.navigationBar.barStyle = .black
     }
-    
-
 }
