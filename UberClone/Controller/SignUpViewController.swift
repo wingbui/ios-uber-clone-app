@@ -10,6 +10,7 @@ import Firebase
 import GeoFire
 
 class SignUpViewController: UIViewController {
+    var containerVC: ContainerViewController?
     var location: CLLocation? = LocationHandler.shared.locationManager.location
     
     private let logoLabel = ViewFactory.makeLogo()
@@ -55,26 +56,20 @@ class SignUpViewController: UIViewController {
                 
                 let geofire = GeoFire(firebaseRef: REF_DRIVER_LOCATIONS)
                 geofire.setLocation(location, forKey: uid) { _ in
-                    self.uploadUserDataAndShowHomeController(uid: uid, values: values)
+                    self.uploadUserDataAndLogin(uid: uid, values: values)
                 }
             } else {
-                self.uploadUserDataAndShowHomeController(uid: uid, values: values)
+                self.uploadUserDataAndLogin(uid: uid, values: values)
             }
         }
     }
     
-    
-    func uploadUserDataAndShowHomeController(uid: String, values: [String: Any]) {
+    func uploadUserDataAndLogin(uid: String, values: [String: Any]) {
         
         REF_USERS.child(uid).updateChildValues(values) { error, ref in
-            print("successfully registed user and save data")
-            
-            guard let homeController = UIApplication.shared.keyWindow?.rootViewController as? HomeViewController else { return }
-            homeController.configureUI()
-            self.dismiss(animated: true, completion: nil)
+            self.goToLogInPage()
         }
     }
-    
     
     func configureLogo() {
         view.addSubview(logoLabel)
@@ -84,7 +79,6 @@ class SignUpViewController: UIViewController {
             logoLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor)
         ])
     }
-    
     
     func configureSignUpForm() {
         let signUpFormView = UIStackView()

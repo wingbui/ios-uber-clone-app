@@ -21,6 +21,7 @@
 		1A2DBDA526EC35C100556C59 /* LogInViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2DBDA426EC35C100556C59 /* LogInViewController.swift */; };
 		1A41A605271427260010200C /* UIViewController+Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A41A604271427260010200C /* UIViewController+Ext.swift */; };
 		1A57B28826F85A4E000E9513 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1A57B28726F85A4E000E9513 /* GoogleService-Info.plist */; };
+		1A5C7D792740F44600CE3E46 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A5C7D782740F44600CE3E46 /* SettingsViewController.swift */; };
 		1A60BC3926F8802E00B2E85B /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A60BC3826F8802E00B2E85B /* HomeViewController.swift */; };
 		1A760F2327085FFA00BFA642 /* RideActionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A760F2227085FFA00BFA642 /* RideActionView.swift */; };
 		1A7BAB46270DA250007FE751 /* Trip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A7BAB45270DA250007FE751 /* Trip.swift */; };
@@ -31,6 +32,7 @@
 		1ACDF13026FF469800E3F530 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ACDF12F26FF469800E3F530 /* User.swift */; };
 		1ACE9A85272E3F46008E304F /* ContainerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ACE9A84272E3F46008E304F /* ContainerViewController.swift */; };
 		1ACE9A87272E3F57008E304F /* MenuViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ACE9A86272E3F57008E304F /* MenuViewController.swift */; };
+		1AE4D335272FD58100D0E991 /* MenuHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AE4D334272FD58100D0E991 /* MenuHeader.swift */; };
 		1AE7EF83270020D900E255EE /* LocationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AE7EF82270020D900E255EE /* LocationHandler.swift */; };
 		1AF3EC6A26EDB20B00120526 /* UCTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AF3EC6926EDB20B00120526 /* UCTextField.swift */; };
 		A560C5B73514CC85F264F60C /* Pods_UberClone.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0EFFFB800A663F5E5619B05A /* Pods_UberClone.framework */; };
@@ -54,6 +56,7 @@
 		1A2DBDA426EC35C100556C59 /* LogInViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogInViewController.swift; sourceTree = "<group>"; };
 		1A41A604271427260010200C /* UIViewController+Ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIViewController+Ext.swift"; sourceTree = "<group>"; };
 		1A57B28726F85A4E000E9513 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		1A5C7D782740F44600CE3E46 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 		1A60BC3826F8802E00B2E85B /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
 		1A760F2227085FFA00BFA642 /* RideActionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideActionView.swift; sourceTree = "<group>"; };
 		1A7BAB45270DA250007FE751 /* Trip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Trip.swift; sourceTree = "<group>"; };
@@ -64,6 +67,7 @@
 		1ACDF12F26FF469800E3F530 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		1ACE9A84272E3F46008E304F /* ContainerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerViewController.swift; sourceTree = "<group>"; };
 		1ACE9A86272E3F57008E304F /* MenuViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuViewController.swift; sourceTree = "<group>"; };
+		1AE4D334272FD58100D0E991 /* MenuHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuHeader.swift; sourceTree = "<group>"; };
 		1AE7EF82270020D900E255EE /* LocationHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationHandler.swift; sourceTree = "<group>"; };
 		1AF3EC6926EDB20B00120526 /* UCTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UCTextField.swift; sourceTree = "<group>"; };
 		46D4360CA78C3ED17499349D /* Pods-UberClone.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-UberClone.debug.xcconfig"; path = "Target Support Files/Pods-UberClone/Pods-UberClone.debug.xcconfig"; sourceTree = "<group>"; };
@@ -147,6 +151,7 @@
 				1A60BC3826F8802E00B2E85B /* HomeViewController.swift */,
 				1ACE9A84272E3F46008E304F /* ContainerViewController.swift */,
 				1ACE9A86272E3F57008E304F /* MenuViewController.swift */,
+				1A5C7D782740F44600CE3E46 /* SettingsViewController.swift */,
 			);
 			path = Controller;
 			sourceTree = "<group>";
@@ -160,6 +165,7 @@
 				1AB872E226FB2E3F0018E422 /* LocationInputView.swift */,
 				1A208F3F26FD815A00EC1E85 /* LocationCell.swift */,
 				1A760F2227085FFA00BFA642 /* RideActionView.swift */,
+				1AE4D334272FD58100D0E991 /* MenuHeader.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -321,7 +327,9 @@
 				1A0E9CAA2702B9A6009EDBF4 /* DriverAnnotation.swift in Sources */,
 				1A60BC3926F8802E00B2E85B /* HomeViewController.swift in Sources */,
 				1AE7EF83270020D900E255EE /* LocationHandler.swift in Sources */,
+				1A5C7D792740F44600CE3E46 /* SettingsViewController.swift in Sources */,
 				1AB872E326FB2E3F0018E422 /* LocationInputView.swift in Sources */,
+				1AE4D335272FD58100D0E991 /* MenuHeader.swift in Sources */,
 				1ACDF12E26FF13FA00E3F530 /* Service.swift in Sources */,
 				1A871A4927098C9900A6970D /* MKMapView+Ext.swift in Sources */,
 				1A7BAB46270DA250007FE751 /* Trip.swift in Sources */,

@@ -24,7 +24,7 @@ enum AnnotationType: String {
 }
 
 protocol HomeViewControllerDelegate {
-    func slideRight()
+    func handleMenuToggle()
 }
 
 class HomeViewController: UIViewController {
@@ -44,7 +44,8 @@ class HomeViewController: UIViewController {
     private let reuseIdentifier = "LocationCell"
     private let annotationIdentifier = "DriverAnnotation"
     private var menuButtonConfig = MenuButtonConfig()
-    private var user: User? {
+    
+    var user: User? {
         didSet {
             self.locationInputView.user = user
             if user?.accountType == .passenger {
@@ -75,9 +76,6 @@ class HomeViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor.backgroundColor
-        
-        checkIfUserIsLoggedIn()
         
         locationInputActivatorView.delegate = self
         locationInputView.delegate = self
@@ -86,53 +84,13 @@ class HomeViewController: UIViewController {
         mapView.delegate = self
         rideActionView.delegate = self
         locationManager?.delegate = self
-        
-        //                signOut()
-        
-    }
-    
-    // MARK: API calling
-    func checkIfUserIsLoggedIn() {
-        if Auth.auth().currentUser?.uid == nil {
-            let loginVC = LogInViewController()
-            loginVC.homeVC = self
-            
-            let navController = UINavigationController(rootViewController: loginVC)
-            navController.modalPresentationStyle = .fullScreen
-            
-            DispatchQueue.main.async {
-                self.present(navController, animated: true, completion: nil)
-            }
-        } else {
-            configureUI()
-        }
-    }
-    
-    func signOut() {
-        do {
-            try Auth.auth().signOut()
-            DispatchQueue.main.async {
-                let navController = UINavigationController(rootViewController: LogInViewController())
-                navController.modalPresentationStyle = .fullScreen
-                self.present(navController, animated: true, completion: nil)
-            }
-        } catch {
-            print(error)
-        }
-    }
-    
-    func fetchUserData() {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        
-        Service.shared.fetchUserData(uid: uid) { [weak self] user in
-            guard let self = self else { return }
-            self.user = user
-        }
+        configureUI()
     }
     
     // MARK: Passenger side methods
     func fetchDrivers() {
         guard let location = locationManager?.location else { return }
+        
         PassengerService.shared.fetchDrivers(location: location) { driver in
             guard let coordinate = driver.location?.coordinate else { return }
             
@@ -143,7 +101,6 @@ class HomeViewController: UIViewController {
                     guard let driverAnnotation = annotation as? DriverAnnotation else { return false }
                     if driverAnnotation.uid == driver.uid {
                         driverAnnotation.updateAnnotationPosition(with: coordinate)
-                        print("calling zoomForActive in fetch drivers")
                         self.zoomForActiveTrip(withDriverUid: driver.uid)
                         return true
                     }
@@ -162,8 +119,6 @@ class HomeViewController: UIViewController {
             self.trip = trip
             guard let state = trip.state else { return }
             guard let driverUid = trip.driverUid else { return }
-            
-            print(state)
             
             switch state {
             case .requested:
@@ -235,7 +190,7 @@ class HomeViewController: UIViewController {
         
         switch menuButtonConfig {
         case .menu:
-            delegate?.slideRight()
+            delegate?.handleMenuToggle()
         case .goBack:
             
             UIView.animate(withDuration: 0.2) {
@@ -284,13 +239,14 @@ class HomeViewController: UIViewController {
         }, completion: completion)
     }
     
-    // MARK: Confugure functions
+    // MARK: ConfigureUI functions
     func configureUI() {
+        view.backgroundColor = UIColor.backgroundColor
+        
         configureMapView()
         configureRideActionView()
         configureTableView()
         configureMenuButton()
-        fetchUserData()
         enableLocationServices()
     }
     

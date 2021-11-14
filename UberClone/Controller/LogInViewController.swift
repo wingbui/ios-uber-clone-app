@@ -9,7 +9,7 @@ import UIKit
 import Firebase
 
 class LogInViewController: UIViewController {
-    var homeVC: HomeViewController?
+    var containerVC:  ContainerViewController?
     private let emailTextField = UCTextField(placeholder: "Email", imageName: "envelope")
     private let passwordTextField = UCTextField(placeholder: "Password", imageName: "lock", isSecret: true)
     
@@ -25,12 +25,11 @@ class LogInViewController: UIViewController {
         configureSignUpLinkButton()
     }
     
-    
     @objc func goToSignUpPage() {
         let signUpViewController = SignUpViewController()
+        signUpViewController.containerVC = containerVC
         navigationController?.pushViewController(signUpViewController, animated: true)
     }
-    
     
     @objc func handleLogIn() {
         guard let email = emailTextField.textField.text else { return }
@@ -42,7 +41,7 @@ class LogInViewController: UIViewController {
                 return
             }
             self.dismiss(animated: true) {
-                self.homeVC?.configureUI()
+                self.containerVC?.checkIfUserIsLoggedIn()
             }
         }
     }
